@@ -7,10 +7,16 @@
     "example": "examples",
     "test": "tests"
   },
+  "watch": {
+    "test": {
+      "patterns": ["src", "test"],
+      "extensions": "ts"
+    }
+  },
   "scripts": {
-    "build": "webpack --mode development",
-    "build-test": "tsc --outDir tests/dist",
-    "test": "mocha --ui tdd --require jsdom-global/register dist/tests/**/*.js"
+    "build": "webpack --mode production",
+    "test": "webpack --mode development && mocha-chrome dist/index.html",
+    "watch": "npm-watch test"
   },
   "repository": {
     "type": "git",
@@ -22,7 +28,10 @@
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
     "chai": "*",
+    "file-loader": "^3.0.1",
     "mocha": "^6.0.2",
+    "mocha-chrome": "^2.0.0",
+    "npm-watch": "^0.6.0",
     "requirejs": "^2.3.6",
     "ts-loader": "^5.3.3",
     "ts-node": "^8.0.3",
