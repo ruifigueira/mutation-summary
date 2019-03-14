@@ -225,20 +225,17 @@ export class TreeChanges extends NodeMap<NodeChange> {
     this.anyAttributesChanged = false;
     this.anyCharacterDataChanged = false;
 
-    for (var m = 0; m < mutations.length; m++) {
-      var mutation = mutations[m];
+    for (const mutation of mutations) {
       switch (mutation.type) {
 
         case 'childList':
           this.anyParentsChanged = true;
-          for (var i = 0; i < mutation.removedNodes.length; i++) {
-            var node = mutation.removedNodes[i];
+          mutation.removedNodes.forEach(node => {
             this.getChange(node).removedFromParent(mutation.target);
-          }
-          for (var i = 0; i < mutation.addedNodes.length; i++) {
-            var node = mutation.addedNodes[i];
+          });
+          mutation.addedNodes.forEach(node => {
             this.getChange(node).insertedIntoParent();
-          }
+          });
           break;
 
         case 'attributes':
@@ -348,8 +345,8 @@ export class MutationProjection {
       return;
 
     var changedNodes:Node[] = this.treeChanges.keys();
-    for (var i = 0; i < changedNodes.length; i++) {
-      this.visitNode(changedNodes[i], undefined);
+    for (const node of changedNodes) {
+      this.visitNode(node, undefined);
     }
   }
 
@@ -429,16 +426,14 @@ export class MutationProjection {
     this.selectors = selectors;
     this.characterDataOnly = characterDataOnly;
 
-    for (var i = 0; i < this.entered.length; i++) {
-      var node = this.entered[i];
+    for (const node of this.entered) {
       var matchable = this.matchabilityChange(node);
       if (matchable === Movement.ENTERED || matchable === Movement.STAYED_IN)
         summary.added.push(node);
     }
 
     var stayedInNodes = this.stayedIn.keys();
-    for (var i = 0; i < stayedInNodes.length; i++) {
-      var node = stayedInNodes[i];
+    for (const node of stayedInNodes) {
       var matchable = this.matchabilityChange(node);
 
       if (matchable === Movement.ENTERED) {
@@ -454,8 +449,7 @@ export class MutationProjection {
       }
     }
 
-    for (var i = 0; i < this.exited.length; i++) {
-      var node = this.exited[i];
+    for (const node of this.exited) {
       var matchable = this.matchabilityChange(node);
       if (matchable === Movement.EXITED || matchable === Movement.STAYED_IN)
         summary.removed.push(node);
@@ -508,8 +502,7 @@ export class MutationProjection {
     if (includeAttributes) {
       attributeFilter = {};
       caseInsensitiveFilter = {};
-      for (var i = 0; i < includeAttributes.length; i++) {
-        var attrName:string = includeAttributes[i];
+      for (const attrName of includeAttributes) {
         attributeFilter[attrName] = true;
         caseInsensitiveFilter[attrName.toLowerCase()] = attrName;
       }
@@ -518,9 +511,7 @@ export class MutationProjection {
     var result:StringMap<Element[]> = {};
     var nodes = this.treeChanges.keys();
 
-    for (var i = 0; i < nodes.length; i++) {
-      var node = nodes[i];
-
+    for (const node of nodes) {
       var change = this.treeChanges.get(node);
       if (!change.attributes)
         continue;
@@ -532,8 +523,7 @@ export class MutationProjection {
 
       var element = <Element>node;
       var changedAttrNames = change.getAttributeNamesMutated();
-      for (var j = 0; j < changedAttrNames.length; j++) {
-        var attrName = changedAttrNames[j];
+      for (let attrName of changedAttrNames) {
 
         if (attributeFilter &&
             !attributeFilter[attrName] &&
@@ -570,8 +560,7 @@ export class MutationProjection {
 
     var nodes = this.treeChanges.keys();
     var result:Node[] = [];
-    for (var i = 0; i < nodes.length; i++) {
-      var target = nodes[i];
+    for (const target of nodes) {
       if (Movement.STAYED_IN !== this.treeChanges.reachabilityChange(target))
         continue;
 
@@ -672,8 +661,7 @@ export class MutationProjection {
 
     this.childListChangeMap = new NodeMap<ChildListChange>();
 
-    for (var i = 0; i < this.mutations.length; i++) {
-      var mutation = this.mutations[i];
+    for (const mutation of this.mutations) {
       if (mutation.type != 'childList')
         continue;
 
@@ -700,8 +688,7 @@ export class MutationProjection {
         change.oldPrevious.set(node, previous);
       }
 
-      for (var j = 0; j < mutation.removedNodes.length; j++) {
-        var node = mutation.removedNodes[j];
+      mutation.removedNodes.forEach(node => {
         recordOldPrevious(node, oldPrevious);
 
         if (change.added.has(node)) {
@@ -712,19 +699,18 @@ export class MutationProjection {
         }
 
         oldPrevious = node;
-      }
+      });
 
       recordOldPrevious(mutation.nextSibling, oldPrevious);
 
-      for (var j = 0; j < mutation.addedNodes.length; j++) {
-        var node = mutation.addedNodes[j];
+      mutation.addedNodes.forEach(node => {
         if (change.removed.has(node)) {
           change.removed.delete(node);
           change.maybeMoved.set(node, true);
         } else {
           change.added.set(node, true);
         }
-      }
+      });
     }
   }
 
@@ -907,8 +893,8 @@ class Qualifier {
       return this.attrValue == oldValue;
 
     var tokens = oldValue.split(' ');
-    for (var i = 0; i < tokens.length; i++) {
-      if (this.attrValue === tokens[i])
+    for (const token of tokens) {
+      if (this.attrValue === token)
         return true;
     }
 
@@ -977,8 +963,7 @@ class Selector {
 
     var attributeOldValues:string[] = [];
     var anyChanged = false;
-    for (var i = 0; i < this.qualifiers.length; i++) {
-      var qualifier = this.qualifiers[i];
+    for (const qualifier of this.qualifiers) {
       var oldValue = change.getAttributeOldValue(qualifier.attrName);
       attributeOldValues.push(oldValue);
       anyChanged = anyChanged || (oldValue !== undefined);
@@ -1400,8 +1385,8 @@ function validateElementAttributes(attribs:string):string[] {
   var attributes = {};
 
   var tokens = attribs.split(/\s+/);
-  for (var i = 0; i < tokens.length; i++) {
-    var name = tokens[i];
+  for (const token of tokens) {
+    var name = token;
     if (!name)
       continue;
 
@@ -1551,9 +1536,7 @@ export class MutationSummary {
       queries: []
     };
 
-    for (var i = 0; i < options.queries.length; i++) {
-      var request = options.queries[i];
-
+    for (const request of options.queries) {
       // all
       if (request.all) {
         if (Object.keys(request).length > 1)
@@ -1620,8 +1603,8 @@ export class MutationSummary {
     var projection = new MutationProjection(this.root, mutations, this.elementFilter, this.calcReordered, this.options.oldPreviousSibling);
 
     var summaries:Summary[] = [];
-    for (var i = 0; i < this.options.queries.length; i++) {
-      summaries.push(new Summary(projection, this.options.queries[i]));
+    for (const query of this.options.queries) {
+      summaries.push(new Summary(projection, query));
     }
 
     return summaries;
