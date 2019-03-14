@@ -1,5 +1,3 @@
-///<reference path='../src/mutation-summary.ts'/>
-
 // Copyright 2013 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+import { StringMap, NumberMap, NodeMap, Query, Summary, MutationSummary } from '../mutation-summary';
 
 interface NodeData {
   id:number;
@@ -39,7 +39,7 @@ interface TextData extends NodeData{
   textContent:string;
 }
 
-class TreeMirror {
+export class TreeMirror {
 
   private idMap:NumberMap<Node>;
 
@@ -170,7 +170,7 @@ class TreeMirror {
   }
 }
 
-class TreeMirrorClient {
+export class TreeMirrorClient {
   private nextId:number;
 
   private mutationSummary:MutationSummary;
@@ -182,14 +182,14 @@ class TreeMirrorClient {
 
     var rootId = this.serializeNode(target).id;
     var children:NodeData[] = [];
-    for (var child = target.firstChild; child; child = child.nextSibling)
+    for (var child:Node = target.firstChild; child; child = child.nextSibling)
       children.push(this.serializeNode(child, true));
 
     this.mirror.initialize(rootId, children);
 
     var self = this;
 
-    var queries = [{ all: true }];
+    var queries:Query[] = [{ all: true }];
 
     if (testingQueries)
       queries = queries.concat(testingQueries);
@@ -260,7 +260,7 @@ class TreeMirrorClient {
         if (recursive && elm.childNodes.length) {
           data.childNodes = [];
 
-          for (var child = elm.firstChild; child; child = child.nextSibling)
+          for (var child:Node = elm.firstChild; child; child = child.nextSibling)
             data.childNodes.push(this.serializeNode(child, true));
         }
         break;

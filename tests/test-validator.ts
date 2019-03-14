@@ -12,7 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-MutationSummary.createQueryValidator = function(root, query) {
+import { assert } from 'chai';
+
+import { MutationSummary } from '../src/mutation-summary';
+
+export function compareNodeArrayIgnoreOrder(expected, actual) {
+  assert.strictEqual(expected.length, actual.length);
+  var map = new MutationSummary.NodeMap();
+  expected.forEach(function (node) {
+      map.set(node, true);
+  });
+  actual.forEach(function (node) {
+      assert.isTrue(map.has(node));
+  });
+}
+
+export function createQueryValidator(root, query) {
   var matchesSelector = 'matchesSelector';
   if ('webkitMatchesSelector' in Element.prototype)
     matchesSelector = 'webkitMatchesSelector';
@@ -21,39 +36,39 @@ MutationSummary.createQueryValidator = function(root, query) {
 
 
   if (query.all) {
-    function allFilter(node) {
+    var allFilter = function allFilter(node) {
       return typeof node.appendChild == 'function';
-    }
+    };
 
-    function allData(node) {
+    var allData = function allData(node) {
       var oldPreviousSiblingMap = new MutationSummary.NodeMap;
 
       for (var child = node.firstChild; child; child = child.nextSibling)
         oldPreviousSiblingMap.set(child, child.previousSibling);
 
       return oldPreviousSiblingMap;
-    }
+    };
 
-    function allValidator(summary, stayed, old, current) {
+    var allValidator = function allValidator(summary, stayed, old, current) {
       summary.reordered.forEach(function(node) {
         var oldPreviousSiblingMap = old.get(summary.getOldParentNode(node));
         assert.strictEqual(oldPreviousSiblingMap.get(node), summary.getOldPreviousSibling(node));
       });
-    }
+    };
 
     return new Validator(root, allFilter, allData, allValidator);
   }
 
   if (query.characterData) {
-    function textNodeFilter(node) {
+    var textNodeFilter = function textNodeFilter(node) {
       return node.nodeType == Node.TEXT_NODE || node.nodeType == Node.COMMENT_NODE;
-    }
+    };
 
-    function textNodeData(node) {
+    var textNodeData = function textNodeData(node) {
       return node.textContent;
-    }
+    };
 
-    function textNodeValidator(summary, stayed, old, current) {
+    var textNodeValidator = function textNodeValidator(summary, stayed, old, current) {
       var changed = stayed.filter(function(node) {
         return old.get(node) != current.get(node);
       });
@@ -63,21 +78,21 @@ MutationSummary.createQueryValidator = function(root, query) {
       changed.forEach(function(node) {
         assert.strictEqual(old.get(node), summary.getOldCharacterData(node));
       });
-    }
+    };
 
     return new Validator(root, textNodeFilter, textNodeData, textNodeValidator);
   }
 
   if (query.attribute) {
-    function attributeFilter(node) {
+    var attributeFilter = function attributeFilter(node) {
       return node.nodeType == Node.ELEMENT_NODE && node.hasAttribute(query.attribute);
-    }
+    };
 
-    function attributeData(node) {
+    var attributeData = function attributeData(node) {
       return node.getAttribute(query.attribute);
-    }
+    };
 
-    function attributeValidator(summary, stayed, old, current) {
+    var attributeValidator = function attributeValidator(summary, stayed, old, current) {
       var changed = stayed.filter(function(node) {
         return old.get(node) != current.get(node);
       });
@@ -87,27 +102,28 @@ MutationSummary.createQueryValidator = function(root, query) {
       changed.forEach(function(node) {
         assert.strictEqual(old.get(node), summary.getOldAttribute(node, query.attribute));
       });
-    }
+    };
 
     return new Validator(root, attributeFilter, attributeData, attributeValidator);
   }
 
   if (query.element) {
-    function elementFilter(node) {
+    var elementFilter = function elementFilter(node) {
       if (node.nodeType != Node.ELEMENT_NODE)
         return false;
       return query.elementFilter.some(function(pattern) {
         return node[matchesSelector](pattern.selectorString);
       });
-    }
+    };
 
-    function elementData(node) {
+    var elementData = function elementData(node) {
 
       var caseInsensitive = node instanceof HTMLElement &&
                             node.ownerDocument instanceof HTMLDocument;
 
       var data = {
-        parentNode: node.parentNode
+        parentNode: node.parentNode,
+        attributes: undefined
       };
 
       if (!query.elementAttributes)
@@ -119,9 +135,9 @@ MutationSummary.createQueryValidator = function(root, query) {
       });
 
       return data;
-    }
+    };
 
-    function elementValidator(summary, stayed, old, current) {
+    var elementValidator = function elementValidator(summary, stayed, old, current) {
       var attributeChanged = {};
       if (query.elementAttributes) {
         query.elementAttributes.forEach(function(attrName) {
@@ -173,8 +189,7 @@ MutationSummary.createQueryValidator = function(root, query) {
 
 function Validator(root, includeFunc, dataFunc, validateFunc) {
 
-  function collectNodeMap(node, includeFunc, dataFunc, map) {
-    map = map || new MutationSummary.NodeMap;
+  var collectNodeMap = function collectNodeMap(node, includeFunc, dataFunc, map = new MutationSummary.NodeMap) {
     if (includeFunc(node))
       map.set(node, dataFunc(node));
 

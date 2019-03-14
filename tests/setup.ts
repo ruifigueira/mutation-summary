@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { assert } from 'chai';
+import { MutationSummary, Options, Query } from '../src/mutation-summary';
+
 function assertSelectorNames(selectors, expectSelectorStrings) {
   assert.strictEqual(expectSelectorStrings.length, selectors.length);
   expectSelectorStrings.forEach(function(expectSelectorString, i) {
@@ -293,7 +296,7 @@ suite('Setup', function() {
   test('Options Validation', function() {
     // Unknown option.
     assert.throws(function() {
-      new MutationSummary({
+      new MutationSummary(<Options>{
         blarg: true,
         callback: function() {},
         queries: [{ all: true }]
@@ -304,13 +307,14 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         queries: [{ all: true }]
-      });
+      } as Options);
     });
 
     // callback must be a function.
     assert.throws(function() {
-      new MutationSummary({
-        callback: 'foo'
+      new MutationSummary(<Options><unknown>{
+        callback: 'foo',
+        queries: []
       });
     });
 
@@ -318,6 +322,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
+        queries: []
       });
     });
 
@@ -339,7 +344,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
-        queries: [{ all: true, foo: false }]
+        queries: [<Query>{ all: true, foo: false }]
       });
     });
 
@@ -353,7 +358,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
-        queries: [{ attribute: "foo", bar: false }]
+        queries: [<Query>{ attribute: "foo", bar: false }]
       });
     });
 
@@ -361,7 +366,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
-        queries: [{ attribute: 1 }]
+        queries: [<Query><unknown>{ attribute: 1 }]
       });
     });
 
@@ -442,7 +447,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
-        queries: [{ element: 'div[foo]', foo: true }]
+        queries: [<Query>{ element: 'div[foo]', foo: true }]
       });
     });
 
@@ -458,7 +463,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
-        queries: [{ element: 'div[foo]', elementAttributes: 'foo', foo: true }]
+        queries: [<Query>{ element: 'div[foo]', elementAttributes: 'foo', foo: true }]
       });
     });
 
@@ -472,7 +477,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
-        queries: [{ characterData: true, foo: true }]
+        queries: [<Query>{ characterData: true, foo: true }]
       });
     });
 
@@ -488,7 +493,7 @@ suite('Setup', function() {
     assert.throws(function() {
       new MutationSummary({
         callback: function() {},
-        queries: [{ foo: true  }]
+        queries: [<Query>{ foo: true  }]
       });
     });
 

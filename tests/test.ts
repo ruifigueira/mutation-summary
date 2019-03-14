@@ -1,24 +1,12 @@
-///<reference path='third_party/DefinitelyTyped/chai/chai-assert.d.ts'/>
-///<reference path='../src/mutation-summary.ts'/>
-///<reference path='../util/tree-mirror.ts'/>
+import { assert } from 'chai';
 
-declare var suite:(s:string, a:any)=>any;
-declare var test:(s:string, a:any)=>any;
-declare var setup:(a:any)=>any;
-declare var teardown:(a:any)=>any;
+import { Options, Query, Summary, MutationSummary } from '../src/mutation-summary';
+import { TreeMirror, TreeMirrorClient } from '../src/util/tree-mirror';
 
-function compareNodeArrayIgnoreOrder(expected:Node[], actual:Node[]) {
-  assert.strictEqual(expected.length, actual.length);
+import { compareNodeArrayIgnoreOrder, createQueryValidator } from './test-validator';
+import './setup';
 
-  var map = new MutationSummary.NodeMap<boolean>();
-  expected.forEach(function(node) {
-    map.set(node, true);
-  });
-
-  actual.forEach(function(node) {
-    assert.isTrue(map.has(node));
-  });
-}
+MutationSummary.createQueryValidator = createQueryValidator;
 
 suite('Mutation Summary', function() {
 
@@ -30,7 +18,9 @@ suite('Mutation Summary', function() {
   var options:Options;
 
   setup(function() {
-    testDiv = document.getElementById('test-div');
+    testDiv = document.createElement('div');
+    testDiv.id = 'test-div';
+    document.body.append(testDiv);
     testDiv['__id__'] = 1;
   });
 
@@ -219,7 +209,7 @@ suite('Mutation Summary', function() {
   });
 
   test('Attribute -- Array proto changed', function() {
-    Array.prototype.foo = 'bar';
+    Array.prototype['foo'] = 'bar';
 
     var div = document.createElement('div');
     testDiv.appendChild(div);
@@ -259,7 +249,7 @@ suite('Mutation Summary', function() {
     div2.removeAttribute('foo');
     div2.setAttribute('foo', 'baz2');
     assertNothingReported();
-    delete Array.prototype.foo;
+    delete Array.prototype['foo'];
   });
 
   test('Attribute Case Insensitive', function() {
@@ -1180,8 +1170,8 @@ suite('TreeMirror Fuzzer', function() {
 
     assert.strictEqual(node.childNodes.length, copy.childNodes.length);
 
-    var copyChild = copy.firstChild;
-    for (var child = node.firstChild; child; child = child.nextSibling) {
+    var copyChild:Node = copy.firstChild;
+    for (var child:Node = node.firstChild; child; child = child.nextSibling) {
       assertTreesEqual(<HTMLElement>child, <HTMLElement>copyChild);
       copyChild = copyChild.nextSibling;
     }
@@ -1288,7 +1278,7 @@ suite('TreeMirror Fuzzer', function() {
     if (!root.childNodes || ! root.childNodes.length)
       return;
 
-    for (var child = root.firstChild; child; child = child.nextSibling) {
+    for (var child:Node = root.firstChild; child; child = child.nextSibling) {
       getReachable(child, reachable);
     }
 

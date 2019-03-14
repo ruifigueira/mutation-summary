@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "importHelpers": true,
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "sourceMap": false,
+        "noEmitOnError": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "strict": false,
+    }
+}

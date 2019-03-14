@@ -12,27 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var MutationObserverCtor;
-if (typeof WebKitMutationObserver !== 'undefined')
-  MutationObserverCtor = WebKitMutationObserver;
-else
-  MutationObserverCtor = MutationObserver;
-
-if (MutationObserverCtor === undefined) {
-  console.error('DOM Mutation Observers are required.');
-  console.error('https://developer.mozilla.org/en-US/docs/DOM/MutationObserver');
-  throw Error('DOM Mutation Observers are required');
-}
-
-interface StringMap<T> {
+export interface StringMap<T> {
   [key: string]: T;
 }
 
-interface NumberMap<T> {
+export interface NumberMap<T> {
   [key: number]: T;
 }
 
-class NodeMap<T> {
+export class NodeMap<T> {
 
   private static ID_PROP = '__mutation_summary_node_map_id__';
   private static nextId_:number = 1;
@@ -74,7 +62,7 @@ class NodeMap<T> {
   delete(node:Node) {
     var id = this.nodeId(node);
     delete this.nodes[id];
-    this.values[id] = undefined;
+    delete this.values[id];
   }
 
   keys():Node[] {
@@ -99,7 +87,7 @@ class NodeMap<T> {
  *  ];
  */
 
-enum Movement {
+export enum Movement {
   STAYED_OUT,
   ENTERED,
   STAYED_IN,
@@ -112,7 +100,7 @@ function enteredOrExited(changeType:Movement):boolean {
   return changeType === Movement.ENTERED || changeType === Movement.EXITED;
 }
 
-class NodeChange {
+export class NodeChange {
 
   public isCaseInsensitive:boolean;
 
@@ -199,13 +187,13 @@ class NodeChange {
   }
 }
 
-class ChildListChange {
+export class ChildListChange {
 
   public added:NodeMap<boolean>;
   public removed:NodeMap<boolean>;
   public maybeMoved:NodeMap<boolean>;
   public oldPrevious:NodeMap<Node>;
-  public moved:NodeMap<boolean>;
+  public moved?:NodeMap<boolean>;
 
   constructor() {
     this.added = new NodeMap<boolean>();
@@ -216,7 +204,7 @@ class ChildListChange {
   }
 }
 
-class TreeChanges extends NodeMap<NodeChange> {
+export class TreeChanges extends NodeMap<NodeChange> {
 
   public anyParentsChanged:boolean;
   public anyAttributesChanged:boolean;
@@ -324,7 +312,7 @@ class TreeChanges extends NodeMap<NodeChange> {
   }
 }
 
-class MutationProjection {
+export class MutationProjection {
 
   private treeChanges:TreeChanges;
   private entered:Node[];
@@ -410,7 +398,7 @@ class MutationProjection {
       return;
 
     // reachable === ENTERED || reachable === EXITED.
-    for (var child = node.firstChild; child; child = child.nextSibling) {
+    for (var child:Node = node.firstChild; child; child = child.nextSibling) {
       this.visitNode(child, reachable);
     }
   }
@@ -421,7 +409,7 @@ class MutationProjection {
 
     this.processChildlistChanges();
 
-    var parentNode = node.parentNode;
+    var parentNode:Node = node.parentNode;
     var nodeChange = this.treeChanges.get(node);
     if (nodeChange && nodeChange.oldParentNode)
       parentNode = nodeChange.oldParentNode;
@@ -487,7 +475,7 @@ class MutationProjection {
   }
 
   getOldPreviousSibling(node:Node):Node {
-    var parentNode = node.parentNode;
+    var parentNode:Node = node.parentNode;
     var nodeChange = this.treeChanges.get(node);
     if (nodeChange && nodeChange.oldParentNode)
       parentNode = nodeChange.oldParentNode;
@@ -613,7 +601,7 @@ class MutationProjection {
     return result;
   }
 
-  matchabilityChange(node:Node) {
+  matchabilityChange(node:Node):Movement {
     // TODO(rafaelw): Include PI, CDATA?
     // Only include text nodes.
     if (this.characterDataOnly) {
@@ -697,7 +685,7 @@ class MutationProjection {
 
       var oldPrevious = mutation.previousSibling;
 
-      function recordOldPrevious(node:Node, previous:Node) {
+      var recordOldPrevious = function recordOldPrevious(node:Node, previous:Node) {
         if (!node ||
             change.oldPrevious.has(node) ||
             change.added.has(node) ||
@@ -746,7 +734,7 @@ class MutationProjection {
 
     this.processChildlistChanges();
 
-    var parentNode = node.parentNode;
+    var parentNode:Node = node.parentNode;
     var nodeChange = this.treeChanges.get(node);
     if (nodeChange && nodeChange.oldParentNode)
       parentNode = nodeChange.oldParentNode;
@@ -825,7 +813,7 @@ class MutationProjection {
   }
 }
 
-class Summary {
+export class Summary {
   public added:Node[];
   public removed:Node[];
   public reparented:Node[];
@@ -937,7 +925,7 @@ class Qualifier {
     if (this.contains)
       return '[' + this.attrName + '~=' + escapeQuotes(this.attrValue) + ']';
 
-    if ('attrValue' in this)
+    if (this.attrValue !== undefined && this.attrName !== null)
       return '[' + this.attrName + '=' + escapeQuotes(this.attrValue) + ']';
 
     return '[' + this.attrName + ']';
@@ -1443,7 +1431,7 @@ function elementFilterAttributes(selectors:Selector[]):string[] {
   return Object.keys(attributes);
 }
 
-interface Query {
+export interface Query {
   element?:string;
   attribute?:string;
   all?:boolean;
@@ -1453,7 +1441,7 @@ interface Query {
   elementFilter?:Selector[];
 }
 
-interface Options {
+export interface Options {
   callback:(summaries:Summary[]) => any;
   queries: Query[];
   rootNode?:Node;
@@ -1461,7 +1449,7 @@ interface Options {
   observeOwnChanges?:boolean;
 }
 
-class MutationSummary {
+export class MutationSummary {
 
   public static NodeMap = NodeMap; // exposed for use in TreeMirror.
   public static parseElementFilter = Selector.parseSelectors; // exposed for testing.
@@ -1696,7 +1684,7 @@ class MutationSummary {
       });
     }
 
-    this.observer = new MutationObserverCtor((mutations:MutationRecord[]) => {
+    this.observer = new MutationObserver((mutations:MutationRecord[]) => {
       this.observerCallback(mutations);
     });
 

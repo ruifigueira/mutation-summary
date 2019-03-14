@@ -14,34 +14,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<html>
-<head>
-<title>MutationSummary tests</title>
-<meta charset="utf-8">
-<link rel="stylesheet" href="../node_modules/mocha/mocha.css">
-<script src="../node_modules/chai/chai.js"></script>
-<script src="../node_modules/mocha/mocha.js"></script>
-<script src="../src/mutation-summary.js"></script>
-<script src="../util/tree-mirror.js"></script>
-</head>
-<body>
-<script>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MutationSummary tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../node_modules/mocha/mocha.css">
+  </head>
+  <body>
+    <div id="mocha"></div>
 
-mocha.setup({
-  ui: 'tdd',
-  ignoreLeaks: true
-});
+    <script src="../node_modules/mocha/mocha.js"></script>
 
-var assert = chai.assert;
+    <script class="mocha-init">
+      mocha.setup('tdd');
+      mocha.checkLeaks();
+    </script>
 
-</script>
-<script src="setup.js"></script>
-<script src="test-validator.js"></script>
-<script src="test.js"></script>
-<div id="test-div"></div>
-<div id="mocha"></div>
-<script>
-mocha.run();
-</script>
-</body>
+    <div id="test-div"></div>
+    
+    <script src="./test.js"></script>
+    <script class="mocha-exec">
+      mocha.run();
+    </script>
+  </body>
 </html>

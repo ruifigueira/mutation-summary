@@ -8,7 +8,9 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "webpack --mode development",
+    "build-test": "tsc --outDir tests/dist",
+    "test": "mocha --ui tdd --require jsdom-global/register dist/tests/**/*.js"
   },
   "repository": {
     "type": "git",
@@ -17,14 +19,19 @@
   "author": "",
   "license": "Apache 2.0",
   "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.6",
     "chai": "*",
-    "mocha": "*"
+    "mocha": "^6.0.2",
+    "requirejs": "^2.3.6",
+    "ts-loader": "^5.3.3",
+    "ts-node": "^8.0.3",
+    "typescript": "^3.3.3333",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
+  },
+  "dependencies": {
+    "@types/jsdom": "^12.2.3",
+    "tslib": "^1.9.3"
   }
 }
-
-
-
-
-
-
-
