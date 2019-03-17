@@ -219,8 +219,8 @@ export class TreeChanges extends NodeMap<NodeChange> {
     super();
 
     this.rootNode = rootNode;
-    this.reachableCache = undefined;
-    this.wasReachableCache = undefined;
+    this.reachableCache = new NodeMap<boolean>();
+    this.wasReachableCache = new NodeMap<boolean>();
     this.anyParentsChanged = false;
     this.anyAttributesChanged = false;
     this.anyCharacterDataChanged = false;
@@ -273,7 +273,6 @@ export class TreeChanges extends NodeMap<NodeChange> {
     if (!node)
       return false;
 
-    this.reachableCache = this.reachableCache || new NodeMap<boolean>();
     var isReachable = this.reachableCache.get(node);
     if (isReachable === undefined) {
       isReachable = this.getIsReachable(node.parentNode);
@@ -289,7 +288,6 @@ export class TreeChanges extends NodeMap<NodeChange> {
     if (!node)
       return false;
 
-    this.wasReachableCache = this.wasReachableCache || new NodeMap<boolean>();
     var wasReachable:boolean = this.wasReachableCache.get(node);
     if (wasReachable === undefined) {
       wasReachable = this.getWasReachable(this.getOldParent(node));
@@ -411,11 +409,7 @@ export class MutationProjection {
     if (nodeChange && nodeChange.oldParentNode)
       parentNode = nodeChange.oldParentNode;
 
-    var change = this.childListChangeMap.get(parentNode);
-    if (!change) {
-      change = new ChildListChange();
-      this.childListChangeMap.set(parentNode, change);
-    }
+    var change = this.getChildlistChange(parentNode);
 
     if (!change.oldPrevious.has(node)) {
       change.oldPrevious.set(node, node.previousSibling);
@@ -474,7 +468,7 @@ export class MutationProjection {
     if (nodeChange && nodeChange.oldParentNode)
       parentNode = nodeChange.oldParentNode;
 
-    var change = this.childListChangeMap.get(parentNode);
+    var change = this.findChildlistChange(parentNode);
     if (!change)
       throw Error('getOldPreviousSibling requested on invalid node.');
 
@@ -645,11 +639,15 @@ export class MutationProjection {
     return accum;
   }
 
-  getChildlistChange(el:Element):ChildListChange {
-    var change = this.childListChangeMap.get(el);
+  findChildlistChange(parentNode:Node):ChildListChange | undefined {
+    return this.childListChangeMap.get(parentNode);
+  }
+
+  getChildlistChange(parentNode:Node):ChildListChange {
+    var change = this.findChildlistChange(parentNode);
     if (!change) {
       change = new ChildListChange();
-      this.childListChangeMap.set(el, change);
+      this.childListChangeMap.set(parentNode, change);
     }
 
     return change;
@@ -725,7 +723,7 @@ export class MutationProjection {
     if (nodeChange && nodeChange.oldParentNode)
       parentNode = nodeChange.oldParentNode;
 
-    var change = this.childListChangeMap.get(parentNode);
+    var change = this.findChildlistChange(parentNode);
     if (!change)
       return false;
 
