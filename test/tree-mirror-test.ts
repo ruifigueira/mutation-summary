@@ -51,7 +51,7 @@ suite('TreeMirror Fuzzer', function() {
 
     var elementQuery:Query = {
       element: randomTagname() + '[' + randomAttributeName() + ']',
-      elementAttributes: randomAttributeName() + ' ' + randomAttributeName()
+      elementAttributes: randomAttributeName() + ' blah'
     };
     testingQueries.push(elementQuery);
 
