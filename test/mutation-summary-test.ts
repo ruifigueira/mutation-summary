@@ -32,9 +32,6 @@ suite('Mutation Summary', function() {
     query = q || { all: true };
     options = {
       rootNode: testDiv,
-      callback: function() {
-        throw 'Mutation Delivered at end of microtask'
-      },
       queries: [query]
     }
 
@@ -1067,5 +1064,37 @@ suite('Mutation Summary', function() {
     });
 
     div.setAttribute('foo', 'bar');
+  });
+
+  test('Without Callback', function(async:()=>any) {
+    var div = document.createElement('div');
+    var span = document.createElement('span');
+
+    testDiv.appendChild(div);
+
+    var summary = new MutationSummary({
+      queries: [{ all: true }],
+      rootNode: div,
+    });
+
+    startObserving();
+
+    setTimeout(() => {
+      div.setAttribute('foo', 'bar');
+      setTimeout(() => {
+        div.appendChild(span);
+        setTimeout(() => {
+          var summaries = observer.takeSummaries();
+          summary.disconnect();
+          assertSummary({
+            attributeChanged: { 'foo': [div] },
+            attributeOldValue: { 'foo': [] },
+            added: [span]
+          }, summaries);
+          async();
+        }, 0);
+      }, 0);
+    }, 0);
+
   });
 });

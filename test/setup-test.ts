@@ -303,11 +303,11 @@ suite('Setup', function() {
       });
     });
 
-    // callback is required.
-    assert.throws(function() {
-      new MutationSummary({
+    // callback is optional.
+    assert.ok(function() {
+      new MutationSummary(<Options><unknown>{
         queries: [{ all: true }]
-      } as Options);
+      });
     });
 
     // callback must be a function.

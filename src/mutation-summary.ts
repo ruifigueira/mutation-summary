@@ -1425,7 +1425,7 @@ export interface Query {
 }
 
 export interface Options {
-  callback:(summaries:Summary[]) => any;
+  callback?:(summaries:Summary[]) => any;
   queries: Query[];
   rootNode?:Node;
   oldPreviousSibling?:boolean;
@@ -1443,10 +1443,11 @@ export class MutationSummary {
   private observer:MutationObserver;
   private observerOptions:MutationObserverInit;
   private root:Node;
-  private callback:(summaries:Summary[])=>any;
+  private callback?:(summaries:Summary[])=>any;
   private elementFilter:Selector[];
   private calcReordered:boolean;
   private queryValidators:any[];
+  private mutations:MutationRecord[];
 
   private static optionKeys:StringMap<boolean> = {
     'callback': true, // required
@@ -1520,8 +1521,8 @@ export class MutationSummary {
         throw Error('Invalid option: ' + prop);
     }
 
-    if (typeof options.callback !== 'function')
-      throw Error('Invalid options: callback is required and must be a function');
+    if (options.callback && typeof options.callback !== 'function')
+      throw Error('Invalid options: callback is optional and must be a function');
 
     if (!options.queries || !options.queries.length)
       throw Error('Invalid options: queries must contain at least one query request object.');
@@ -1594,8 +1595,9 @@ export class MutationSummary {
     return opts;
   }
 
-  private createSummaries(mutations:MutationRecord[]):Summary[] {
-    if (!mutations || !mutations.length)
+  private createSummaries():Summary[] {
+    var mutations = this.resetMutations();
+    if (!mutations.length)
       return [];
 
     var projection = new MutationProjection(this.root, mutations, this.elementFilter, this.calcReordered, this.options.oldPreviousSibling);
@@ -1647,6 +1649,7 @@ export class MutationSummary {
     this.observerOptions = MutationSummary.createObserverOptions(this.options.queries);
     this.root = this.options.rootNode;
     this.callback = this.options.callback;
+    this.mutations = [];
 
     this.elementFilter = Array.prototype.concat.apply([], this.options.queries.map((query) => {
       return query.elementFilter ? query.elementFilter : [];
@@ -1673,22 +1676,26 @@ export class MutationSummary {
   }
 
   private observerCallback(mutations:MutationRecord[]) {
-    if (!this.options.observeOwnChanges)
-      this.observer.disconnect();
+    this.addMutations(mutations);
+    
+    if (this.callback) {
+      if (!this.options.observeOwnChanges)
+        this.observer.disconnect();
 
-    var summaries = this.createSummaries(mutations);
-    this.runQueryValidators(summaries);
+      var summaries = this.createSummaries();
+      this.runQueryValidators(summaries);
 
-    if (this.options.observeOwnChanges)
-      this.checkpointQueryValidators();
+      if (this.options.observeOwnChanges)
+        this.checkpointQueryValidators();
 
-    if (this.changesToReport(summaries))
-      this.callback(summaries);
+      if (this.changesToReport(summaries))
+        this.callback(summaries);
 
-    // disconnect() may have been called during the callback.
-    if (!this.options.observeOwnChanges && this.connected) {
-      this.checkpointQueryValidators();
-      this.observer.observe(this.root, this.observerOptions);
+      // disconnect() may have been called during the callback.
+      if (!this.options.observeOwnChanges && this.connected) {
+        this.checkpointQueryValidators();
+        this.observer.observe(this.root, this.observerOptions);
+      }
     }
   }
 
@@ -1705,7 +1712,9 @@ export class MutationSummary {
     if (!this.connected)
       throw Error('Not connected');
 
-    var summaries = this.createSummaries(this.observer.takeRecords());
+    this.addMutations(this.observer.takeRecords());
+
+    var summaries = this.createSummaries();
     return this.changesToReport(summaries) ? summaries : undefined;
   }
 
@@ -1714,6 +1723,16 @@ export class MutationSummary {
     this.observer.disconnect();
     this.connected = false;
     return summaries;
+  }
+
+  private addMutations(mutations:MutationRecord[]) {
+    this.mutations.push(...mutations);
+  }
+
+  private resetMutations():MutationRecord[] {
+    var mutations = this.mutations;
+    this.mutations = [];
+    return mutations;
   }
 }
 
