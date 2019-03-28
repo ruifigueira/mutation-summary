@@ -10,5 +10,7 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "strict": false,
+        "declaration": true,
+        "declarationDir": "dist",
     }
 }

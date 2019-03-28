@@ -4,7 +4,7 @@ module.exports = {
   entry: {
     'mutation-summary': './src/mutation-summary.ts',
     'tree-mirror': './src/util/tree-mirror.ts',
-    'tests': './test/tests.ts'
+    'test/tests': './test/tests.ts'
   },
   output: {
     filename: '[name].js',
@@ -19,11 +19,11 @@ module.exports = {
         exclude: /node_modules/
       },
       {
-        test: /\.(png|jpg|gif|html)$/,
+        test: /\.html$/,
         use: {
           loader: 'file-loader',
           options: {
-            name: '[name].[ext]'
+            name: 'test/[name].[ext]'
           }
         }
       },
