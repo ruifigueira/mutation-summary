@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+type Nullable<T> = T | null;
+
 export interface StringMap<T> {
   [key: string]: T;
 }
@@ -20,9 +23,15 @@ export interface NumberMap<T> {
   [key: number]: T;
 }
 
-export class NodeMap<T> {
+declare global {
+  interface Node {
+    ["__mutation_summary_node_map_id__"]: number | undefined;
+  }
+}
 
-  private static ID_PROP = '__mutation_summary_node_map_id__';
+export class NodeMap<T> {
+  
+  private static readonly ID_PROP = '__mutation_summary_node_map_id__';
   private static nextId_:number = 1;
 
   private nodes:Node[];
@@ -60,14 +69,14 @@ export class NodeMap<T> {
   }
 
   delete(node:Node) {
-    var id = this.nodeId(node);
+    const id = this.nodeId(node);
     delete this.nodes[id];
     delete this.values[id];
   }
 
   keys():Node[] {
-    var nodes:Node[] = [];
-    for (var id in this.nodes) {
+    const nodes:Node[] = [];
+    for (const id in this.nodes) {
       if (!this.isIndex(id))
         continue;
       nodes.push(this.nodes[id]);
@@ -108,17 +117,17 @@ export class NodeChange {
               public childList:boolean = false,
               public attributes:boolean = false,
               public characterData:boolean = false,
-              public oldParentNode:Node = null,
+              public oldParentNode: Nullable<Node> = null,
               public added:boolean = false,
-              private attributeOldValues:StringMap<string> = null,
-              public characterDataOldValue:string = null) {
+              private attributeOldValues: Nullable<StringMap<string>> = null,
+              public characterDataOldValue: Nullable<string> = null) {
     this.isCaseInsensitive =
         this.node.nodeType === Node.ELEMENT_NODE &&
         this.node instanceof HTMLElement &&
         this.node.ownerDocument instanceof HTMLDocument;
   }
 
-  getAttributeOldValue(name:string):string {
+  getAttributeOldValue(name:string): string | undefined {
     if (!this.attributeOldValues)
       return undefined;
     if (this.isCaseInsensitive)
@@ -241,13 +250,13 @@ export class TreeChanges extends NodeMap<NodeChange> {
         case 'attributes':
           this.anyAttributesChanged = true;
           var change = this.getChange(mutation.target);
-          change.attributeMutated(mutation.attributeName, mutation.oldValue);
+          change.attributeMutated(mutation.attributeName!, mutation.oldValue!);
           break;
 
         case 'characterData':
           this.anyCharacterDataChanged = true;
           var change = this.getChange(mutation.target);
-          change.characterDataMutated(mutation.oldValue);
+          change.characterDataMutated(mutation.oldValue!);
           break;
       }
     }
@@ -919,7 +928,7 @@ class Qualifier {
 class Selector {
   private static nextUid:number = 1;
   private static matchesSelector:string = (function(){
-    var element = document.createElement('div');
+    var element = document.createElement('div') as any;
     if (typeof element['webkitMatchesSelector'] === 'function')
       return 'webkitMatchesSelector';
     if (typeof element['mozMatchesSelector'] === 'function')
@@ -948,7 +957,7 @@ class Selector {
   }
 
   private isMatching(el:Element):boolean {
-    return el[Selector.matchesSelector](this.selectorString);
+    return (el as any)[Selector.matchesSelector](this.selectorString);
   }
 
   private wasMatching(el:Element, change:NodeChange, isMatching:boolean):boolean {
@@ -1379,8 +1388,8 @@ function validateElementAttributes(attribs:string):string[] {
   if (!attribs.trim().length)
     throw Error('Invalid request option: elementAttributes must contain at least one attribute.');
 
-  var lowerAttributes = {};
-  var attributes = {};
+  var lowerAttributes: StringMap<boolean> = {};
+  var attributes: StringMap<boolean> = {};
 
   var tokens = attribs.split(/\s+/);
   for (const token of tokens) {
@@ -1628,7 +1637,7 @@ export class MutationSummary {
     return summaries.some((summary) => {
       var summaryProps =  ['added', 'removed', 'reordered', 'reparented',
         'valueChanged', 'characterDataChanged'];
-      if (summaryProps.some(function(prop) { return summary[prop] && summary[prop].length; }))
+      if (summaryProps.some(function(prop) { return (summary as any)[prop] && (summary as any)[prop].length; }))
         return true;
 
       if (summary.attributeChanged) {

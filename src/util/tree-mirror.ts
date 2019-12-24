@@ -14,7 +14,7 @@
 
 import { StringMap, NumberMap, NodeMap, Query, Summary, MutationSummary } from '../mutation-summary';
 
-interface NodeData {
+export interface NodeData {
   id:number;
   nodeType?:number;
   name?:string;
@@ -26,24 +26,29 @@ interface NodeData {
   childNodes?:NodeData[];
 }
 
-interface PositionData extends NodeData {
+export interface PositionData extends NodeData {
   previousSibling:NodeData;
   parentNode:NodeData;
 }
 
-interface AttributeData extends NodeData {
+export interface AttributeData extends NodeData {
   attributes:StringMap<string>;
 }
 
-interface TextData extends NodeData{
+export interface TextData extends NodeData{
   textContent:string;
+}
+
+interface Delegate {
+  setAttribute?(node: Node, qualifiedName: string, value: string): Node | undefined;
+  createElement?(tagName: string): Node | undefined;
 }
 
 export class TreeMirror {
 
   private idMap:NumberMap<Node>;
 
-  constructor(public root:Node, public delegate?:any) {
+  constructor(public root:Node, public delegate?: Delegate) {
     this.idMap = {};
   }
 
@@ -170,13 +175,18 @@ export class TreeMirror {
   }
 }
 
+interface Mirror {
+  initialize(rootId: number, children: NodeData[]): void;
+  applyChanged(removed: NodeData[], addedOrMoved: PositionData[], attributes: AttributeData[], text: TextData[]): void;
+}
+
 export class TreeMirrorClient {
   private nextId:number;
 
   private mutationSummary:MutationSummary;
   private knownNodes:NodeMap<number>;
 
-  constructor(public target:Node, public mirror:any, testingQueries:Query[]) {
+  constructor(public target:Node, public mirror:Mirror, testingQueries:Query[]) {
     this.nextId = 1;
     this.knownNodes = new MutationSummary.NodeMap<number>();
 
@@ -221,7 +231,7 @@ export class TreeMirrorClient {
     this.knownNodes.delete(node);
   }
 
-  private serializeNode(node:Node, recursive?:boolean):NodeData {
+  private serializeNode(node:Node, recursive:boolean = false):NodeData {
     if (node === null)
       return null;
 

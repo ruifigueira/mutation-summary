@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "webpack --mode production",
-    "test": "webpack --mode development && mocha-chrome dist/index.html",
+    "test": "webpack --mode development && mocha-chrome dist/test/index.html",
     "watch": "npm-watch test"
   },
   "repository": {
